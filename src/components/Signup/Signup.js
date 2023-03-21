@@ -4,53 +4,59 @@ import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 import InputControl from "../InputControl/InputControl";
 import { auth } from "../../firebase";
 import styles from "./Signup.module.css";
+import { openAI } from './service'
+import { post } from "./service";
+
 
 function Signup() {
   const navigate = useNavigate();
   const [values, setValues] = useState({
     name: "",
-    email: "",
-    pass: "",
+    // email: "",
+    // pass: "",
   });
   const [errorMsg, setErrorMsg] = useState("");
   const [submitButtonDisabled, setSubmitButtonDisabled] = useState(false);
+  const [answer, setAnswer] = useState()
 
   const handleSubmission = () => {
-    if (!values.name || !values.email || !values.pass) {
+    if (!values.name) {
       setErrorMsg("Fill all fields");
       return;
     }
-    setErrorMsg("");
+    setErrorMsg("")
+    openAI(values.name).then((response) => {
+      if(response){
+      
+        setAnswer(response.choices[0].message.content)
+        let message = {
+          message : response.choices[0].message.content
+        }
+      
+        post("https://my-first-project-27296-default-rtdb.firebaseio.com/users.json", message).then((response) =>{
 
-    setSubmitButtonDisabled(true);
-    createUserWithEmailAndPassword(auth, values.email, values.pass)
-      .then(async (response) => {
-        setSubmitButtonDisabled(false);
-        const user = response.user;
-        await updateProfile(user, {
-          displayName: values.name,
-        });
-        navigate("/",{state: {name: response.user.displayName}});
-      })
-      .catch((err) => {
-        setSubmitButtonDisabled(false);
-        setErrorMsg(err.message);
-      });
-  };
+        })
+        // postAPI('https://my-first-project-27296-default-rtdb.firebaseio.com/users.json',values).then((response) => {
+    //   if(response){
+    //     setSubmitButtonDisabled(false)
+    //   }
+      }
+    })
+  }
 
   return (
     <div className={styles.container}>
       <div className={styles.innerBox}>
-        <h1 className={styles.heading}>Signup</h1>
+        <h1 className={styles.heading}>Hi I'm here......</h1>
 
         <InputControl
-          label="Name"
-          placeholder="Enter your name"
+          label="Questions"
+          placeholder="Enter your your question here"
           onChange={(event) =>
             setValues((prev) => ({ ...prev, name: event.target.value }))
           }
         />
-        <InputControl
+        {/* <InputControl
           label="Email"
           placeholder="Enter email address"
           onChange={(event) =>
@@ -63,19 +69,19 @@ function Signup() {
           onChange={(event) =>
             setValues((prev) => ({ ...prev, pass: event.target.value }))
           }
-        />
+        /> */}
 
         <div className={styles.footer}>
-          <b className={styles.error}>{errorMsg}</b>
+          <b className={styles.error}>{answer}</b>
           <button onClick={handleSubmission} disabled={submitButtonDisabled}>
-            Signup
+            Submit
           </button>
-          <p>
+          {/* <p>
             Already have an account?{" "}
             <span>
               <Link to="/login">Login</Link>
             </span>
-          </p>
+          </p> */}
         </div>
       </div>
     </div>
